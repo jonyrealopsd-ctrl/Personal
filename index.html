@@ -1,1055 +1,656 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FitCoach Pro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitPro — Personal Trainer App</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a0a;
-  --bg2: #111111;
-  --bg3: #1a1a1a;
-  --bg4: #222222;
-  --border: #2a2a2a;
-  --border2: #333333;
-  --text: #ffffff;
-  --text2: #aaaaaa;
-  --text3: #666666;
-  --purple: #7F77DD;
-  --purple2: #9f99e8;
-  --purple-bg: #1a1830;
-  --green: #1D9E75;
-  --green-bg: #0f2a1e;
-  --red: #E24B4A;
-  --red-bg: #2a0f0f;
-  --amber: #EF9F27;
-  --font-head: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --bg:#0a0a0a;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;
+  --purple:#7F77DD;--purple-light:#a09ae8;--purple-dark:#534AB7;
+  --green:#1D9E75;--green-light:#25c48f;
+  --text:#ffffff;--text2:#aaaaaa;--text3:#666666;
+  --border:#2a2a2a;--border2:#333333;
+  --danger:#e24b4a;--amber:#BA7517;
+  --radius:12px;--radius-sm:8px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  min-height: 100vh;
-  max-width: 430px;
-  margin: 0 auto;
-  position: relative;
-  overflow-x: hidden;
-}
-h1,h2,h3,h4 { font-family: var(--font-head); }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+.hidden{display:none!important;}
+.flex{display:flex;}.flex-col{flex-direction:column;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
+.gap-2{gap:8px;}.gap-3{gap:12px;}.gap-4{gap:16px;}.w-full{width:100%;}
+.text-sm{font-size:13px;}.text-xs{font-size:11px;}.text-muted{color:var(--text3);}
+.text-purple{color:var(--purple);}.text-green{color:var(--green);}.text-danger{color:var(--danger);}
 
-/* UTILS */
-.hidden { display: none !important; }
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-8 { gap: 8px; }
-.gap-12 { gap: 12px; }
-.gap-16 { gap: 16px; }
-.w-full { width: 100%; }
-.text-muted { color: var(--text2); }
-.text-sm { font-size: 13px; }
-.text-xs { font-size: 11px; }
-.fw-500 { font-weight: 500; }
-.mt-8 { margin-top: 8px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mt-24 { margin-top: 24px; }
+#toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transform:translateX(120%);transition:transform 0.3s ease;max-width:300px;}
+#toast.show{transform:translateX(0);}
+#toast.success{background:var(--green);color:#fff;}
+#toast.error{background:var(--danger);color:#fff;}
+#toast.info{background:var(--purple);color:#fff;}
 
-/* SCREEN SYSTEM */
-.screen { display: none; min-height: 100vh; padding-bottom: 80px; }
-.screen.active { display: block; }
+#app-loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9998;}
+.spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-/* NAV */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 430px;
-  background: var(--bg2); border-top: 1px solid var(--border);
-  display: flex; padding: 8px 0 16px; z-index: 100;
-}
-.nav-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 6px; cursor: pointer; transition: all 0.2s;
-  border: none; background: none; color: var(--text3);
-}
-.nav-item.active { color: var(--purple); }
-.nav-item svg { width: 20px; height: 20px; }
-.nav-item span { font-size: 10px; font-family: var(--font-body); }
+#auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg);position:relative;overflow:hidden;}
+#auth-page::before{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(127,119,221,0.12) 0%,transparent 70%);top:-100px;right:-100px;border-radius:50%;}
+#auth-page::after{content:'';position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(29,158,117,0.08) 0%,transparent 70%);bottom:-50px;left:-50px;border-radius:50%;}
 
-/* HEADER */
-.header {
-  padding: 52px 20px 16px;
-  position: sticky; top: 0; background: var(--bg); z-index: 50;
-  border-bottom: 1px solid var(--border);
-}
-.header-inner { display: flex; justify-content: space-between; align-items: center; }
+.auth-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;max-width:400px;position:relative;z-index:1;}
+.auth-logo{width:48px;height:48px;background:var(--purple-dark);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.auth-logo svg{width:26px;height:26px;}
+.auth-card h1{font-size:22px;font-weight:700;margin-bottom:6px;}
+.auth-card p.subtitle{font-size:13px;color:var(--text3);margin-bottom:28px;}
 
-/* CARDS */
-.card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-}
-.card-sm { padding: 12px; border-radius: var(--radius-sm); }
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.form-group input,.form-group select{width:100%;padding:11px 14px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--purple);}
+.form-group select option{background:var(--bg3);}
 
-/* STAT CARD */
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat-card {
-  background: var(--bg3); border-radius: var(--radius-sm);
-  padding: 14px; border: 1px solid var(--border);
-}
-.stat-card .value { font-size: 28px; font-weight: 700; font-family: var(--font-head); }
-.stat-card .label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.btn{width:100%;padding:12px;border-radius:var(--radius-sm);border:none;font-size:14px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+.btn-primary{background:var(--purple);color:#fff;}
+.btn-primary:hover{background:var(--purple-light);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-secondary{background:transparent;color:var(--text2);border:0.5px solid var(--border2);margin-top:10px;}
+.btn-secondary:hover{background:var(--bg3);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:var(--green-light);}
+.btn-sm{width:auto;padding:7px 14px;font-size:12px;}
 
-/* INPUTS */
-.input-group { margin-bottom: 16px; }
-.input-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
-input, select, textarea {
-  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text); font-family: var(--font-body); font-size: 14px;
-  padding: 12px 14px; border-radius: var(--radius-sm); outline: none;
-  transition: border-color 0.2s;
-}
-input:focus, select:focus, textarea:focus { border-color: var(--purple); }
-select option { background: var(--bg3); }
-textarea { resize: vertical; min-height: 80px; }
+.auth-switch{text-align:center;margin-top:20px;font-size:13px;color:var(--text3);}
+.auth-switch a{color:var(--purple);text-decoration:none;cursor:pointer;}
 
-/* BUTTONS */
-.btn {
-  padding: 13px 20px; border-radius: var(--radius-sm); border: none;
-  font-family: var(--font-head); font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: all 0.2s; width: 100%; letter-spacing: 0.3px;
-}
-.btn-primary { background: var(--purple); color: #fff; }
-.btn-primary:hover { background: var(--purple2); transform: translateY(-1px); }
-.btn-primary:active { transform: scale(0.98); }
-.btn-success { background: var(--green); color: #fff; }
-.btn-success:hover { opacity: 0.9; }
-.btn-outline {
-  background: transparent; color: var(--text2);
-  border: 1px solid var(--border2);
-}
-.btn-outline:hover { border-color: var(--purple); color: var(--purple); }
-.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
-.btn-sm { padding: 8px 14px; font-size: 12px; width: auto; }
+#app-shell{display:none;flex-direction:column;min-height:100vh;}
 
-/* BADGE */
-.badge {
-  display: inline-block; padding: 3px 8px; border-radius: 20px;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
-}
-.badge-purple { background: var(--purple-bg); color: var(--purple); }
-.badge-green { background: var(--green-bg); color: var(--green); }
-.badge-red { background: var(--red-bg); color: var(--red); }
-.badge-amber { background: #2a1f0a; color: var(--amber); }
+.top-nav{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:0.5px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.top-nav .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--purple);}
+.top-nav .logo span{color:var(--text2);font-weight:400;}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;}
 
-/* AVATAR */
-.avatar {
-  border-radius: 50%; display: flex; align-items: center;
-  justify-content: center; font-weight: 600; font-family: var(--font-head);
-  flex-shrink: 0;
-}
-.avatar-sm { width: 34px; height: 34px; font-size: 12px; }
-.avatar-md { width: 42px; height: 42px; font-size: 14px; }
-.avatar-lg { width: 56px; height: 56px; font-size: 18px; }
+.main-content{flex:1;padding:20px;padding-bottom:80px;max-width:600px;margin:0 auto;width:100%;}
 
-/* LIST ITEM */
-.list-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; background: var(--bg2);
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
-  margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s;
-}
-.list-item:hover { border-color: var(--border2); }
-.list-item:last-child { margin-bottom: 0; }
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:0.5px solid var(--border);display:flex;justify-content:space-around;align-items:center;padding:10px 0 16px;z-index:100;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 16px;color:var(--text3);font-size:10px;transition:color 0.2s;}
+.nav-item.active{color:var(--purple);}
+.nav-item svg{width:20px;height:20px;}
 
-/* EXERCISE ITEM */
-.exercise-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; background: var(--bg2);
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
-  margin-bottom: 8px; transition: all 0.2s;
-}
-.exercise-item.done { border-color: var(--green); background: var(--green-bg); opacity: 0.8; }
-.check-box {
-  width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border2);
-  background: transparent; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; transition: all 0.2s; flex-shrink: 0;
-}
-.check-box.checked { background: var(--green); border-color: var(--green); }
-.check-box.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.card-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;}
 
-/* PROGRESS BAR */
-.progress-wrap { background: var(--bg4); border-radius: 20px; height: 6px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 20px; transition: width 0.5s ease; }
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;}
+.stat-card .stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;}
+.stat-card .stat-label{font-size:11px;color:var(--text3);}
 
-/* MODAL */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-  z-index: 200; display: flex; align-items: flex-end;
-  backdrop-filter: blur(4px);
-}
-.modal-overlay.hidden { display: none; }
-.modal {
-  background: var(--bg2); border-radius: 20px 20px 0 0;
-  border: 1px solid var(--border); width: 100%; max-width: 430px;
-  margin: 0 auto; padding: 24px 20px 40px;
-  max-height: 90vh; overflow-y: auto;
-}
-.modal-handle {
-  width: 40px; height: 4px; background: var(--border2);
-  border-radius: 2px; margin: 0 auto 20px;
-}
-.modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.client-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border);cursor:pointer;transition:opacity 0.2s;}
+.client-row:last-child{border-bottom:none;}
+.client-row:hover{opacity:0.8;}
+.client-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
 
-/* TOAST */
-.toast {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text); padding: 12px 20px; border-radius: var(--radius-sm);
-  font-size: 13px; z-index: 999; transition: all 0.3s;
-  white-space: nowrap; max-width: 90vw;
-}
-.toast.hidden { opacity: 0; pointer-events: none; }
-.toast.success { border-color: var(--green); color: var(--green); }
-.toast.error { border-color: var(--red); color: var(--red); }
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;font-family:'Syne',sans-serif;}
+.badge-purple{background:rgba(127,119,221,0.15);color:var(--purple);}
+.badge-green{background:rgba(29,158,117,0.15);color:var(--green);}
+.badge-amber{background:rgba(186,117,23,0.15);color:var(--amber);}
 
-/* DIVIDER */
-.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.exercise-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:background 0.2s;}
+.exercise-item:hover{background:var(--bg4);}
+.exercise-item.done{opacity:0.6;}
+.check-box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
+.check-box.checked{background:var(--green);border-color:var(--green);}
 
-/* SECTION */
-.section { padding: 20px; }
-.section-title {
-  font-size: 11px; font-weight: 600; color: var(--text3);
-  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
-}
+.progress-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
 
-/* WORKOUT PLAN PILL */
-.plan-pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer;
-  transition: all 0.2s; margin-right: 6px; margin-bottom: 6px;
-}
-.plan-pill.active { background: var(--purple-bg); border-color: var(--purple); color: var(--purple); }
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
 
-/* ================= LOGIN SCREEN ================= */
-#screen-auth {
-  display: flex; flex-direction: column; min-height: 100vh;
-  justify-content: center; padding: 40px 24px;
-}
-.auth-logo {
-  width: 56px; height: 56px; background: var(--purple); border-radius: 16px;
-  display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
-}
-.auth-title { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-.auth-sub { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
-.auth-toggle {
-  text-align: center; font-size: 13px; color: var(--text2); margin-top: 16px;
-}
-.auth-toggle span { color: var(--purple); cursor: pointer; font-weight: 500; }
-.role-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.role-btn {
-  padding: 12px; border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
-  background: transparent; color: var(--text2); cursor: pointer;
-  font-family: var(--font-body); font-size: 13px; text-align: center;
-  transition: all 0.2s;
-}
-.role-btn.active { border-color: var(--purple); color: var(--purple); background: var(--purple-bg); }
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:flex-end;justify-content:center;z-index:500;}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;border-top:0.5px solid var(--border);}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px;}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;}
 
-/* ================= LOADING ================= */
-#screen-loading {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; min-height: 100vh; gap: 16px;
-}
-.spinner {
-  width: 40px; height: 40px; border: 3px solid var(--border);
-  border-top-color: var(--purple); border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:0.5px solid var(--border);font-size:14px;}
+.profile-row:last-child{border-bottom:none;}
+.profile-row .label{color:var(--text3);font-size:12px;}
 
-/* ANIMATIONS */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn 0.3s ease; }
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;}
+.empty-state svg{width:48px;height:48px;margin:0 auto 12px;display:block;opacity:0.3;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn 0.3s ease forwards;}
+
+@media(max-width:400px){.auth-card{padding:28px 20px;}.main-content{padding:16px;}}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="screen-loading">
-  <div class="auth-logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="white"/></svg></div>
+<div id="app-loading">
+  <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#7F77DD;">FitPro</div>
   <div class="spinner"></div>
-  <p style="color:var(--text3);font-size:13px;">Carregando...</p>
 </div>
+
+<div id="toast"></div>
 
 <!-- AUTH -->
-<div id="screen-auth" class="hidden">
-  <div class="auth-logo">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="white"/></svg>
-  </div>
-  <h1 class="auth-title" id="auth-title">Entrar</h1>
-  <p class="auth-sub" id="auth-sub">Acesse sua conta FitCoach</p>
-
-  <div id="register-only" class="hidden">
-    <label class="input-label">Você é:</label>
-    <div class="role-select">
-      <button class="role-btn active" id="role-trainer" onclick="selectRole('trainer')">🏋️ Personal Trainer</button>
-      <button class="role-btn" id="role-client" onclick="selectRole('client')">👤 Aluno</button>
+<div id="auth-page" class="hidden">
+  <div class="auth-card fade-in">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6.5 6.5h2v11h-2zM15.5 6.5h2v11h-2zM8.5 11h7v2h-7z" fill="#fff"/></svg>
     </div>
-    <div class="input-group" id="trainer-code-group" style="display:none">
-      <label class="input-label">Código do Personal (recebido pelo seu trainer)</label>
-      <input type="text" id="input-trainer-code" placeholder="Ex: abc123"/>
+    <div id="login-form">
+      <h1>Bem-vindo</h1>
+      <p class="subtitle">Faça login para continuar</p>
+      <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div class="auth-switch">Não tem conta? <a onclick="showRegister()">Cadastre-se</a></div>
     </div>
-    <div class="input-group">
-      <label class="input-label">Nome completo</label>
-      <input type="text" id="input-name" placeholder="Seu nome"/>
-    </div>
-  </div>
-
-  <div class="input-group">
-    <label class="input-label">E-mail</label>
-    <input type="email" id="input-email" placeholder="seuemail@gmail.com"/>
-  </div>
-  <div class="input-group">
-    <label class="input-label">Senha</label>
-    <input type="password" id="input-password" placeholder="••••••••"/>
-  </div>
-  <button class="btn btn-primary" id="auth-btn" onclick="handleAuth()">Entrar</button>
-  <div class="auth-toggle" id="auth-toggle">
-    Não tem conta? <span onclick="toggleAuthMode()">Criar conta</span>
-  </div>
-</div>
-
-<!-- TRAINER SCREENS -->
-<div id="screen-trainer-home" class="screen hidden">
-  <div class="header">
-    <div class="header-inner">
-      <div>
-        <p style="font-size:11px;color:var(--text3);">Olá, Personal</p>
-        <h2 id="trainer-name" style="font-size:18px;">Carregando...</h2>
+    <div id="register-form" class="hidden">
+      <h1>Criar conta</h1>
+      <p class="subtitle">Comece a usar o FitPro hoje</p>
+      <div class="form-group"><label>Nome completo</label><input type="text" id="reg-name" placeholder="Seu nome completo"></div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group">
+        <label>Você é</label>
+        <select id="reg-role">
+          <option value="trainer">Personal Trainer</option>
+          <option value="client">Aluno / Cliente</option>
+        </select>
       </div>
-      <div class="avatar avatar-sm" id="trainer-avatar" style="background:var(--purple-bg);color:var(--purple);">?</div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="stat-grid" id="trainer-stats">
-      <div class="stat-card">
-        <div class="value" style="color:var(--purple);" id="stat-clients">0</div>
-        <div class="label">Alunos</div>
-      </div>
-      <div class="stat-card">
-        <div class="value" style="color:var(--green);" id="stat-workouts">0</div>
-        <div class="label">Treinos criados</div>
-      </div>
-    </div>
-  </div>
-  <div class="section" style="padding-top:0">
-    <div class="flex justify-between items-center" style="margin-bottom:12px;">
-      <div class="section-title" style="margin-bottom:0">Meus Alunos</div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-client')">+ Novo aluno</button>
-    </div>
-    <div id="clients-list"><p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum aluno ainda</p></div>
-  </div>
-  <div class="section" style="padding-top:0">
-    <div class="flex justify-between items-center" style="margin-bottom:12px;">
-      <div class="section-title" style="margin-bottom:0">Meu código de convite</div>
-    </div>
-    <div class="card">
-      <p style="font-size:11px;color:var(--text3);margin-bottom:6px;">Compartilhe esse código com seus alunos para que eles criem conta:</p>
-      <div class="flex items-center gap-8">
-        <code id="trainer-code" style="font-size:18px;font-family:monospace;color:var(--purple);letter-spacing:3px;">------</code>
-        <button class="btn btn-outline btn-sm" onclick="copyCode()">Copiar</button>
-      </div>
+      <button class="btn btn-primary" id="register-btn" onclick="doRegister()">Criar conta</button>
+      <div class="auth-switch">Já tem conta? <a onclick="showLogin()">Entrar</a></div>
     </div>
   </div>
 </div>
 
-<div id="screen-trainer-workouts" class="screen hidden">
-  <div class="header">
-    <div class="header-inner">
-      <h2 style="font-size:18px;">Treinos</h2>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-workout')">+ Novo</button>
+<!-- APP -->
+<div id="app-shell">
+  <nav class="top-nav">
+    <div class="logo">Fit<span>Pro</span></div>
+    <div class="flex items-center gap-3">
+      <div id="user-role-badge" class="badge badge-purple"></div>
+      <div class="avatar" id="user-avatar" onclick="showPage('profile')"></div>
     </div>
-  </div>
-  <div class="section">
-    <div id="workouts-list"><p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum treino criado</p></div>
-  </div>
-</div>
+  </nav>
 
-<div id="screen-trainer-clients" class="screen hidden">
-  <div class="header">
-    <div class="header-inner">
-      <h2 style="font-size:18px;">Alunos</h2>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-client')">+ Adicionar</button>
-    </div>
-  </div>
-  <div class="section">
-    <div id="all-clients-list"></div>
-  </div>
-</div>
-
-<div id="screen-trainer-profile" class="screen hidden">
-  <div class="header">
-    <div class="header-inner"><h2 style="font-size:18px;">Perfil</h2></div>
-  </div>
-  <div class="section">
-    <div class="card" style="text-align:center;padding:28px;">
-      <div class="avatar avatar-lg" id="profile-avatar" style="background:var(--purple-bg);color:var(--purple);margin:0 auto 14px;">?</div>
-      <h3 id="profile-name" style="font-size:18px;"></h3>
-      <p id="profile-email" style="font-size:13px;color:var(--text2);margin-top:4px;"></p>
-      <span class="badge badge-purple" style="margin-top:8px;">Personal Trainer</span>
-    </div>
-    <div style="margin-top:16px;">
-      <button class="btn btn-outline" onclick="logout()">Sair da conta</button>
-    </div>
-  </div>
-</div>
-
-<!-- CLIENT SCREENS -->
-<div id="screen-client-home" class="screen hidden">
-  <div class="header">
-    <div class="header-inner">
-      <div>
-        <p style="font-size:11px;color:var(--text3);">Olá 👋</p>
-        <h2 id="client-name" style="font-size:18px;">Carregando...</h2>
+  <main class="main-content">
+    <!-- TRAINER HOME -->
+    <div id="page-home" class="hidden fade-in">
+      <div style="margin-bottom:20px;">
+        <p class="text-sm text-muted">Olá,</p>
+        <h1 id="welcome-name" style="font-size:24px;font-weight:800;"></h1>
       </div>
-      <div class="avatar avatar-sm" id="client-avatar" style="background:var(--green-bg);color:var(--green);">?</div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">Meu treino de hoje</div>
-    <div id="client-workout-today">
-      <p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum treino atribuído</p>
-    </div>
-  </div>
-  <div class="section" style="padding-top:0">
-    <div class="section-title">Todos os treinos</div>
-    <div id="client-workouts-list"></div>
-  </div>
-</div>
-
-<div id="screen-client-workout" class="screen hidden">
-  <div class="header">
-    <div class="flex items-center gap-12">
-      <button onclick="goBack()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;">←</button>
-      <div>
-        <h2 id="workout-screen-title" style="font-size:16px;"></h2>
-        <p id="workout-screen-desc" style="font-size:11px;color:var(--text3);"></p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value text-purple" id="stat-clients">0</div><div class="stat-label">Alunos</div></div>
+        <div class="stat-card"><div class="stat-value text-green" id="stat-workouts">0</div><div class="stat-label">Treinos criados</div></div>
       </div>
-    </div>
-  </div>
-  <div class="section">
-    <div id="workout-progress-section" style="margin-bottom:16px;">
-      <div class="flex justify-between items-center" style="margin-bottom:6px;">
-        <span style="font-size:12px;color:var(--text2);">Progresso</span>
-        <span id="progress-text" style="font-size:12px;color:var(--purple);font-weight:500;"></span>
+      <div class="section-header">
+        <span class="section-title">Alunos recentes</span>
+        <button class="btn btn-primary btn-sm" onclick="showPage('clients')">Ver todos</button>
       </div>
-      <div class="progress-wrap"><div class="progress-fill" id="workout-progress-bar" style="background:var(--purple);width:0%;"></div></div>
+      <div id="recent-clients-list"></div>
     </div>
-    <div id="exercises-list"></div>
-    <div id="finish-btn-wrap" class="hidden" style="margin-top:16px;">
-      <button class="btn btn-success" onclick="finishWorkout()">🏆 Finalizar treino!</button>
-    </div>
-  </div>
-</div>
 
-<div id="screen-client-progress" class="screen hidden">
-  <div class="header">
-    <div class="header-inner"><h2 style="font-size:18px;">Meu progresso</h2></div>
-  </div>
-  <div class="section">
-    <div class="stat-grid" style="margin-bottom:16px;">
-      <div class="stat-card">
-        <div class="value" style="color:var(--green);" id="stat-done">0</div>
-        <div class="label">Treinos feitos</div>
+    <!-- CLIENTS -->
+    <div id="page-clients" class="hidden fade-in">
+      <div class="section-header">
+        <span class="section-title">Alunos</span>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-client')">+ Novo</button>
       </div>
-      <div class="stat-card">
-        <div class="value" style="color:var(--purple);" id="stat-exercises">0</div>
-        <div class="label">Exercícios</div>
+      <div id="clients-list"></div>
+    </div>
+
+    <!-- WORKOUTS -->
+    <div id="page-workouts" class="hidden fade-in">
+      <div class="section-header">
+        <span class="section-title">Treinos</span>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-workout')">+ Novo</button>
       </div>
+      <div id="workouts-list"></div>
     </div>
-    <div class="section-title">Histórico</div>
-    <div id="progress-history"></div>
-  </div>
+
+    <!-- CLIENT WORKOUT -->
+    <div id="page-my-workout" class="hidden fade-in">
+      <div style="margin-bottom:20px;">
+        <p class="text-sm text-muted">Seu treino de hoje</p>
+        <h1 id="client-welcome-name" style="font-size:24px;font-weight:800;"></h1>
+      </div>
+      <div id="client-workout-content"></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="page-progress" class="hidden fade-in">
+      <div style="margin-bottom:20px;">
+        <h1 style="font-size:24px;font-weight:800;">Progresso</h1>
+        <p class="text-sm text-muted">Seu histórico de treinos</p>
+      </div>
+      <div id="progress-content"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="page-profile" class="hidden fade-in">
+      <div style="margin-bottom:24px;text-align:center;">
+        <div class="avatar" id="profile-avatar-big" style="width:64px;height:64px;font-size:22px;margin:0 auto 12px;"></div>
+        <h2 id="profile-name" style="font-size:20px;font-weight:700;"></h2>
+        <p id="profile-role-label" class="text-sm text-muted"></p>
+      </div>
+      <div class="card"><div id="profile-info"></div></div>
+      <button class="btn btn-secondary" onclick="doLogout()" style="margin-top:12px;">Sair da conta</button>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" id="trainer-nav">
+    <div class="nav-item active" onclick="showPage('home')" id="nav-home">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+    </div>
+    <div class="nav-item" onclick="showPage('clients')" id="nav-clients">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Alunos
+    </div>
+    <div class="nav-item" onclick="showPage('workouts')" id="nav-workouts">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>Treinos
+    </div>
+    <div class="nav-item" onclick="showPage('profile')" id="nav-profile-t">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Perfil
+    </div>
+  </nav>
+
+  <nav class="bottom-nav hidden" id="client-nav">
+    <div class="nav-item active" onclick="showPage('my-workout')" id="nav-my-workout">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>Treino
+    </div>
+    <div class="nav-item" onclick="showPage('progress')" id="nav-progress">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Progresso
+    </div>
+    <div class="nav-item" onclick="showPage('profile')" id="nav-profile-c">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Perfil
+    </div>
+  </nav>
 </div>
-
-<div id="screen-client-profile" class="screen hidden">
-  <div class="header">
-    <div class="header-inner"><h2 style="font-size:18px;">Perfil</h2></div>
-  </div>
-  <div class="section">
-    <div class="card" style="text-align:center;padding:28px;">
-      <div class="avatar avatar-lg" id="client-profile-avatar" style="background:var(--green-bg);color:var(--green);margin:0 auto 14px;">?</div>
-      <h3 id="client-profile-name" style="font-size:18px;"></h3>
-      <p id="client-profile-email" style="font-size:13px;color:var(--text2);margin-top:4px;"></p>
-      <span class="badge badge-green" style="margin-top:8px;">Aluno</span>
-    </div>
-    <div style="margin-top:16px;">
-      <button class="btn btn-outline" onclick="logout()">Sair da conta</button>
-    </div>
-  </div>
-</div>
-
-<!-- TRAINER NAV -->
-<nav class="bottom-nav hidden" id="trainer-nav">
-  <button class="nav-item active" id="tnav-home" onclick="trainerNav('home')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    <span>Home</span>
-  </button>
-  <button class="nav-item" id="tnav-workouts" onclick="trainerNav('workouts')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>
-    <span>Treinos</span>
-  </button>
-  <button class="nav-item" id="tnav-clients" onclick="trainerNav('clients')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-    <span>Alunos</span>
-  </button>
-  <button class="nav-item" id="tnav-profile" onclick="trainerNav('profile')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-    <span>Perfil</span>
-  </button>
-</nav>
-
-<!-- CLIENT NAV -->
-<nav class="bottom-nav hidden" id="client-nav">
-  <button class="nav-item active" id="cnav-home" onclick="clientNav('home')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    <span>Treino</span>
-  </button>
-  <button class="nav-item" id="cnav-progress" onclick="clientNav('progress')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
-    <span>Progresso</span>
-  </button>
-  <button class="nav-item" id="cnav-profile" onclick="clientNav('profile')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-    <span>Perfil</span>
-  </button>
-</nav>
 
 <!-- MODALS -->
 <div class="modal-overlay hidden" id="modal-add-client">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3 class="modal-title">Novo Aluno</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">O aluno deve criar conta usando o seu <strong style="color:var(--purple);">código de convite</strong>. Compartilhe o código abaixo:</p>
-    <div class="card" style="text-align:center;margin-bottom:20px;">
-      <code id="modal-trainer-code" style="font-size:24px;font-family:monospace;color:var(--purple);letter-spacing:4px;">------</code>
-    </div>
-    <button class="btn btn-primary" onclick="copyCode(); closeModal('modal-add-client')">Copiar código e fechar</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="closeModal('modal-add-client')">Fechar</button>
+    <h2>Adicionar aluno</h2>
+    <p class="text-sm text-muted" style="margin-bottom:16px;">O aluno precisa se cadastrar no app primeiro. Insira o e-mail cadastrado dele.</p>
+    <div class="form-group"><label>E-mail do aluno</label><input type="email" id="client-email-input" placeholder="aluno@email.com"></div>
+    <button class="btn btn-primary" onclick="addClientByEmail()">Vincular aluno</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-add-client')">Cancelar</button>
   </div>
 </div>
 
 <div class="modal-overlay hidden" id="modal-add-workout">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3 class="modal-title">Novo Treino</h3>
-    <div class="input-group">
-      <label class="input-label">Nome do treino (ex: Treino A — Peito)</label>
-      <input type="text" id="workout-name-input" placeholder="Treino A — Peito e Tríceps"/>
-    </div>
-    <div class="input-group">
-      <label class="input-label">Descrição (opcional)</label>
-      <textarea id="workout-desc-input" placeholder="Foco em hipertrofia..."></textarea>
-    </div>
-    <div class="input-group">
-      <label class="input-label">Atribuir a aluno</label>
-      <select id="workout-client-select">
-        <option value="">Nenhum (treino livre)</option>
-      </select>
-    </div>
+    <h2>Criar treino</h2>
+    <div class="form-group"><label>Nome do treino</label><input type="text" id="workout-name-input" placeholder="Ex: Treino A — Peito e Tríceps"></div>
+    <div class="form-group"><label>Descrição (opcional)</label><input type="text" id="workout-desc-input" placeholder="Ex: Foco em hipertrofia"></div>
     <button class="btn btn-primary" onclick="createWorkout()">Criar treino</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="closeModal('modal-add-workout')">Cancelar</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-add-workout')">Cancelar</button>
   </div>
 </div>
 
 <div class="modal-overlay hidden" id="modal-workout-detail">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3 class="modal-title" id="detail-workout-title"></h3>
-    <div class="section-title">Exercícios</div>
-    <div id="detail-exercises-list"></div>
-    <hr class="divider"/>
-    <div class="section-title">Adicionar exercício</div>
-    <div class="input-group">
-      <label class="input-label">Nome</label>
-      <input type="text" id="exercise-name-input" placeholder="Ex: Supino Reto"/>
-    </div>
-    <div class="input-group">
-      <label class="input-label">Séries × Reps × Carga</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <input type="number" id="exercise-sets" placeholder="4" min="1"/>
-        <input type="number" id="exercise-reps" placeholder="12" min="1"/>
-        <input type="text" id="exercise-load" placeholder="60kg"/>
-      </div>
-    </div>
-    <button class="btn btn-primary" onclick="addExercise()">+ Adicionar exercício</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="closeModal('modal-workout-detail')">Fechar</button>
+    <div id="workout-detail-content"></div>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="closeModal('modal-workout-detail')">Fechar</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast hidden" id="toast"></div>
+<div class="modal-overlay hidden" id="modal-add-exercise">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Adicionar exercício</h2>
+    <input type="hidden" id="exercise-workout-id">
+    <div class="form-group"><label>Nome do exercício</label><input type="text" id="exercise-name-input" placeholder="Ex: Supino Reto"></div>
+    <div class="form-group"><label>Séries</label><input type="number" id="exercise-sets-input" placeholder="Ex: 4" min="1" max="20"></div>
+    <div class="form-group"><label>Repetições</label><input type="text" id="exercise-reps-input" placeholder="Ex: 12 ou 8-12"></div>
+    <div class="form-group"><label>Carga (opcional)</label><input type="text" id="exercise-load-input" placeholder="Ex: 60kg"></div>
+    <div class="form-group"><label>Observação (opcional)</label><input type="text" id="exercise-obs-input" placeholder="Ex: Descer até o peito"></div>
+    <button class="btn btn-primary" onclick="addExercise()">Adicionar</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-add-exercise')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-assign-workout">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Atribuir treino</h2>
+    <p class="text-sm text-muted" style="margin-bottom:16px;">Selecione o treino para este aluno:</p>
+    <div id="assign-workout-list"></div>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="closeModal('modal-assign-workout')">Cancelar</button>
+  </div>
+</div>
 
 <script>
-const SUPABASE_URL = 'https://ymtkpxdghmsxyqyzsioo.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltdGtweGRnaG1zeHlxeXpzaW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTcwMDksImV4cCI6MjA5MjM3MzAwOX0.EHxohBZo8egs_SZFfa2nOargXd8SFj_1bpKUbXenFSM';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL='https://ymtkpxdghmsxyqyzsioo.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltdGtweGRnaG1zeHlxeXpzaW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTcwMDksImV4cCI6MjA5MjM3MzAwOX0.EHxohBZo8egs_SZFfa2nOargXd8SFj_1bpKUbXenFSM';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentUser = null;
-let currentProfile = null;
-let currentWorkoutId = null;
-let completedExercises = new Set();
+let currentUser=null,currentProfile=null;
+let appData={clients:[],workouts:[]};
+const avatarColors=['#534AB7','#0F6E56','#993C1D','#185FA5','#993556','#3B6D11','#854F0B'];
 
-// ===== INIT =====
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    await loadUserProfile(session.user);
-  } else {
-    showAuth();
+function getInitials(name){if(!name)return'?';return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function getColor(str){let h=0;for(let c of(str||''))h=(h*31+c.charCodeAt(0))&0xffff;return avatarColors[h%avatarColors.length];}
+function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`show ${type}`;setTimeout(()=>t.className='',3000);}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+
+async function init(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;await loadProfile();}
+  else showAuthPage();
+}
+function showAuthPage(){
+  document.getElementById('app-loading').classList.add('hidden');
+  document.getElementById('auth-page').classList.remove('hidden');
+}
+async function loadProfile(){
+  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  if(error||!data){showAuthPage();return;}
+  currentProfile=data;
+  showApp();
+}
+function showApp(){
+  document.getElementById('app-loading').classList.add('hidden');
+  document.getElementById('auth-page').classList.add('hidden');
+  const shell=document.getElementById('app-shell');
+  shell.style.display='flex';shell.style.flexDirection='column';
+  const name=currentProfile.full_name||currentUser.email;
+  const av=document.getElementById('user-avatar');
+  av.textContent=getInitials(name);av.style.background=getColor(name);av.style.color='#fff';
+  document.getElementById('user-role-badge').textContent=currentProfile.role==='trainer'?'Trainer':'Aluno';
+  if(currentProfile.role==='trainer'){
+    document.getElementById('trainer-nav').classList.remove('hidden');
+    document.getElementById('client-nav').classList.add('hidden');
+    showPage('home');
+  }else{
+    document.getElementById('trainer-nav').classList.add('hidden');
+    document.getElementById('client-nav').classList.remove('hidden');
+    showPage('my-workout');
   }
 }
 
-async function loadUserProfile(user) {
-  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if (error || !data) {
-    await sb.auth.signOut();
-    showAuth();
-    return;
-  }
-  currentUser = user;
-  currentProfile = data;
-  if (data.role === 'trainer') {
-    showTrainerApp();
-  } else {
-    showClientApp();
-  }
+const allPages=['home','clients','workouts','my-workout','progress','profile'];
+function showPage(page){
+  allPages.forEach(p=>{const el=document.getElementById(`page-${p}`);if(el)el.classList.add('hidden');});
+  const target=document.getElementById(`page-${page}`);
+  if(target){target.classList.remove('hidden');target.classList.add('fade-in');}
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navMap={home:'nav-home',clients:'nav-clients',workouts:'nav-workouts',
+    profile:currentProfile?.role==='trainer'?'nav-profile-t':'nav-profile-c',
+    'my-workout':'nav-my-workout',progress:'nav-progress'};
+  const an=document.getElementById(navMap[page]);if(an)an.classList.add('active');
+  if(page==='home')loadTrainerHome();
+  if(page==='clients')loadClients();
+  if(page==='workouts')loadWorkouts();
+  if(page==='my-workout')loadClientWorkout();
+  if(page==='progress')loadProgress();
+  if(page==='profile')renderProfile();
 }
 
-// ===== AUTH =====
-let authMode = 'login';
-let selectedRole = 'trainer';
+function showRegister(){document.getElementById('login-form').classList.add('hidden');document.getElementById('register-form').classList.remove('hidden');}
+function showLogin(){document.getElementById('register-form').classList.add('hidden');document.getElementById('login-form').classList.remove('hidden');}
 
-function showAuth() {
-  hide('screen-loading');
-  show('screen-auth');
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value;
+  if(!email||!password)return showToast('Preencha todos os campos','error');
+  const btn=document.getElementById('login-btn');btn.disabled=true;btn.textContent='Entrando...';
+  const{data,error}=await sb.auth.signInWithPassword({email,password});
+  btn.disabled=false;btn.textContent='Entrar';
+  if(error)return showToast('E-mail ou senha incorretos','error');
+  currentUser=data.user;await loadProfile();
+}
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const password=document.getElementById('reg-password').value;
+  const role=document.getElementById('reg-role').value;
+  if(!name||!email||!password)return showToast('Preencha todos os campos','error');
+  if(password.length<6)return showToast('Senha mínima: 6 caracteres','error');
+  const btn=document.getElementById('register-btn');btn.disabled=true;btn.textContent='Criando...';
+  const{data,error}=await sb.auth.signUp({email,password});
+  if(error){btn.disabled=false;btn.textContent='Criar conta';return showToast(error.message,'error');}
+  await sb.from('profiles').insert({id:data.user.id,full_name:name,role,email});
+  btn.disabled=false;btn.textContent='Criar conta';
+  currentUser=data.user;currentProfile={id:data.user.id,full_name:name,role,email};
+  showToast('Conta criada!','success');showApp();
+}
+async function doLogout(){
+  await sb.auth.signOut();currentUser=null;currentProfile=null;
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('auth-page').classList.remove('hidden');
+  showLogin();
 }
 
-function toggleAuthMode() {
-  authMode = authMode === 'login' ? 'register' : 'login';
-  if (authMode === 'register') {
-    document.getElementById('auth-title').textContent = 'Criar conta';
-    document.getElementById('auth-sub').textContent = 'Junte-se ao FitCoach';
-    document.getElementById('auth-btn').textContent = 'Criar conta';
-    document.getElementById('auth-toggle').innerHTML = 'Já tem conta? <span onclick="toggleAuthMode()">Entrar</span>';
-    show('register-only');
-  } else {
-    document.getElementById('auth-title').textContent = 'Entrar';
-    document.getElementById('auth-sub').textContent = 'Acesse sua conta FitCoach';
-    document.getElementById('auth-btn').textContent = 'Entrar';
-    document.getElementById('auth-toggle').innerHTML = 'Não tem conta? <span onclick="toggleAuthMode()">Criar conta</span>';
-    hide('register-only');
-  }
+async function loadTrainerHome(){
+  document.getElementById('welcome-name').textContent=currentProfile.full_name?.split(' ')[0]||'Personal';
+  const{data:clients}=await sb.from('profiles').select('*').eq('trainer_id',currentUser.id).eq('role','client');
+  const{data:workouts}=await sb.from('workouts').select('*').eq('trainer_id',currentUser.id);
+  appData.clients=clients||[];appData.workouts=workouts||[];
+  document.getElementById('stat-clients').textContent=appData.clients.length;
+  document.getElementById('stat-workouts').textContent=appData.workouts.length;
+  const list=document.getElementById('recent-clients-list');
+  const recent=appData.clients.slice(0,3);
+  if(!recent.length){list.innerHTML='<div class="empty-state">Nenhum aluno ainda. Adicione seu primeiro aluno!</div>';return;}
+  list.innerHTML=`<div class="card">${recent.map(c=>clientRowHTML(c)).join('')}</div>`;
+}
+function clientRowHTML(c){
+  const initials=getInitials(c.full_name);const color=getColor(c.full_name);
+  return`<div class="client-row" onclick="openAssignModal('${c.id}')">
+    <div class="client-avatar" style="background:${color};color:#fff;">${initials}</div>
+    <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${c.full_name}</div><div class="text-xs text-muted">${c.email||''}</div></div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#555"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+  </div>`;
 }
 
-function selectRole(role) {
-  selectedRole = role;
-  document.getElementById('role-trainer').classList.toggle('active', role === 'trainer');
-  document.getElementById('role-client').classList.toggle('active', role === 'client');
-  if (role === 'client') {
-    document.getElementById('trainer-code-group').style.display = 'block';
-  } else {
-    document.getElementById('trainer-code-group').style.display = 'none';
-  }
+async function loadClients(){
+  const{data:clients}=await sb.from('profiles').select('*').eq('trainer_id',currentUser.id).eq('role','client');
+  appData.clients=clients||[];
+  const list=document.getElementById('clients-list');
+  if(!appData.clients.length){list.innerHTML='<div class="empty-state">Nenhum aluno vinculado ainda.</div>';return;}
+  list.innerHTML=`<div class="card">${appData.clients.map(c=>clientRowHTML(c)).join('')}</div>`;
+}
+async function addClientByEmail(){
+  const email=document.getElementById('client-email-input').value.trim();
+  if(!email)return showToast('Digite o e-mail do aluno','error');
+  showToast('Buscando aluno...','info');
+  const{data:found,error}=await sb.from('profiles').select('*').eq('email',email).eq('role','client').single();
+  if(error||!found)return showToast('Aluno não encontrado. Certifique-se que ele se cadastrou.','error');
+  const{error:ue}=await sb.from('profiles').update({trainer_id:currentUser.id}).eq('id',found.id);
+  if(ue)return showToast('Erro ao vincular aluno','error');
+  showToast('Aluno vinculado!','success');
+  closeModal('modal-add-client');
+  document.getElementById('client-email-input').value='';
+  loadClients();loadTrainerHome();
 }
 
-async function handleAuth() {
-  const email = document.getElementById('input-email').value.trim();
-  const password = document.getElementById('input-password').value;
-  if (!email || !password) return showToast('Preencha todos os campos', 'error');
-
-  const btn = document.getElementById('auth-btn');
-  btn.textContent = 'Aguarde...';
-  btn.disabled = true;
-
-  if (authMode === 'login') {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { showToast(error.message, 'error'); btn.textContent = 'Entrar'; btn.disabled = false; return; }
-    await loadUserProfile(data.user);
-  } else {
-    const name = document.getElementById('input-name').value.trim();
-    const trainerCode = document.getElementById('input-trainer-code').value.trim();
-    if (!name) { showToast('Digite seu nome', 'error'); btn.textContent = 'Criar conta'; btn.disabled = false; return; }
-    if (selectedRole === 'client' && !trainerCode) { showToast('Digite o código do Personal', 'error'); btn.textContent = 'Criar conta'; btn.disabled = false; return; }
-
-    let trainerId = null;
-    if (selectedRole === 'client') {
-      const { data: tData } = await sb.from('profiles').select('id').eq('invite_code', trainerCode.toLowerCase()).eq('role', 'trainer').single();
-      if (!tData) { showToast('Código inválido. Verifique com seu Personal.', 'error'); btn.textContent = 'Criar conta'; btn.disabled = false; return; }
-      trainerId = tData.id;
-    }
-
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) { showToast(error.message, 'error'); btn.textContent = 'Criar conta'; btn.disabled = false; return; }
-
-    const code = Math.random().toString(36).substring(2, 8);
-    const { error: profileError } = await sb.from('profiles').insert({
-      id: data.user.id,
-      full_name: name,
-      role: selectedRole,
-      trainer_id: trainerId,
-      invite_code: selectedRole === 'trainer' ? code : null
-    });
-
-    if (profileError) { showToast('Erro ao criar perfil: ' + profileError.message, 'error'); btn.textContent = 'Criar conta'; btn.disabled = false; return; }
-    showToast('Conta criada!', 'success');
-    await loadUserProfile(data.user);
-  }
-  btn.disabled = false;
-}
-
-async function logout() {
-  await sb.auth.signOut();
-  currentUser = null; currentProfile = null;
-  hideAll();
-  hide('trainer-nav'); hide('client-nav');
-  show('screen-auth');
-}
-
-// ===== TRAINER APP =====
-async function showTrainerApp() {
-  hideAll();
-  show('screen-trainer-home');
-  show('trainer-nav');
-  hide('screen-loading');
-
-  const name = currentProfile.full_name;
-  const initials = name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
-  document.getElementById('trainer-name').textContent = name;
-  document.getElementById('trainer-avatar').textContent = initials;
-  document.getElementById('profile-name').textContent = name;
-  document.getElementById('profile-email').textContent = currentUser.email;
-  document.getElementById('profile-avatar').textContent = initials;
-
-  const code = currentProfile.invite_code || '------';
-  document.getElementById('trainer-code').textContent = code;
-  document.getElementById('modal-trainer-code').textContent = code;
-
-  await loadTrainerData();
-}
-
-async function loadTrainerData() {
-  const { data: clients } = await sb.from('profiles').select('*').eq('trainer_id', currentUser.id).eq('role', 'client');
-  const { data: workouts } = await sb.from('workouts').select('*').eq('trainer_id', currentUser.id);
-
-  document.getElementById('stat-clients').textContent = clients?.length || 0;
-  document.getElementById('stat-workouts').textContent = workouts?.length || 0;
-
-  renderClientsList(clients || [], 'clients-list', true);
-  renderClientsList(clients || [], 'all-clients-list', false);
-  renderWorkoutsList(workouts || []);
-  populateClientSelect(clients || []);
-}
-
-function renderClientsList(clients, containerId, limited) {
-  const container = document.getElementById(containerId);
-  if (!clients.length) { container.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum aluno ainda</p>'; return; }
-  const list = limited ? clients.slice(0, 5) : clients;
-  container.innerHTML = list.map(c => {
-    const initials = c.full_name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
-    const colors = ['#533AB7','#993C1D','#185FA5','#0F6E56','#993556'];
-    const color = colors[c.full_name.charCodeAt(0) % colors.length];
-    return `<div class="list-item">
-      <div class="avatar avatar-sm" style="background:${color}22;color:${color};">${initials}</div>
-      <div style="flex:1;">
-        <p style="font-size:14px;font-weight:500;">${c.full_name}</p>
-        <p style="font-size:11px;color:var(--text3);">Aluno ativo</p>
-      </div>
-      <span class="badge badge-green">Ativo</span>
-    </div>`;
-  }).join('');
-}
-
-function renderWorkoutsList(workouts) {
-  const container = document.getElementById('workouts-list');
-  if (!workouts.length) { container.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum treino criado</p>'; return; }
-  container.innerHTML = workouts.map(w => `
-    <div class="list-item" onclick="openWorkoutDetail('${w.id}', '${escHtml(w.name)}')">
-      <div style="width:40px;height:40px;background:var(--purple-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--purple)"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>
-      </div>
-      <div style="flex:1;">
-        <p style="font-size:14px;font-weight:500;">${escHtml(w.name)}</p>
-        <p style="font-size:11px;color:var(--text3);">${w.description || 'Sem descrição'}</p>
-      </div>
-      <span style="color:var(--text3);font-size:18px;">›</span>
+async function loadWorkouts(){
+  const{data:workouts}=await sb.from('workouts').select('*').eq('trainer_id',currentUser.id).order('created_at',{ascending:false});
+  appData.workouts=workouts||[];
+  const list=document.getElementById('workouts-list');
+  if(!appData.workouts.length){list.innerHTML='<div class="empty-state">Nenhum treino criado ainda.</div>';return;}
+  list.innerHTML=appData.workouts.map(w=>`
+    <div class="card" style="cursor:pointer;" onclick="openWorkoutDetail('${w.id}')">
+      <div class="card-header"><span class="card-title">${w.name}</span><span class="badge badge-purple">Ver exercícios</span></div>
+      <p class="text-sm text-muted">${w.description||'Sem descrição'}</p>
     </div>
   `).join('');
 }
-
-function populateClientSelect(clients) {
-  const sel = document.getElementById('workout-client-select');
-  sel.innerHTML = '<option value="">Nenhum (treino livre)</option>' +
-    clients.map(c => `<option value="${c.id}">${escHtml(c.full_name)}</option>`).join('');
-}
-
-async function createWorkout() {
-  const name = document.getElementById('workout-name-input').value.trim();
-  const desc = document.getElementById('workout-desc-input').value.trim();
-  const clientId = document.getElementById('workout-client-select').value;
-  if (!name) return showToast('Digite o nome do treino', 'error');
-
-  const { error } = await sb.from('workouts').insert({
-    name, description: desc,
-    trainer_id: currentUser.id,
-    client_id: clientId || null
-  });
-  if (error) return showToast('Erro: ' + error.message, 'error');
-
-  showToast('Treino criado!', 'success');
+async function createWorkout(){
+  const name=document.getElementById('workout-name-input').value.trim();
+  const desc=document.getElementById('workout-desc-input').value.trim();
+  if(!name)return showToast('Digite o nome do treino','error');
+  const{error}=await sb.from('workouts').insert({name,description:desc,trainer_id:currentUser.id});
+  if(error)return showToast('Erro ao criar treino','error');
+  showToast('Treino criado!','success');
   closeModal('modal-add-workout');
-  document.getElementById('workout-name-input').value = '';
-  document.getElementById('workout-desc-input').value = '';
-  await loadTrainerData();
+  document.getElementById('workout-name-input').value='';document.getElementById('workout-desc-input').value='';
+  loadWorkouts();
 }
 
-async function openWorkoutDetail(workoutId, workoutName) {
-  currentWorkoutId = workoutId;
-  document.getElementById('detail-workout-title').textContent = workoutName;
-  await loadDetailExercises();
+async function openWorkoutDetail(workoutId){
+  const workout=appData.workouts.find(w=>w.id===workoutId);if(!workout)return;
+  const{data:exercises}=await sb.from('exercises').select('*').eq('workout_id',workoutId).order('created_at');
+  const exList=exercises||[];
+  document.getElementById('workout-detail-content').innerHTML=`
+    <h2>${workout.name}</h2>
+    <p class="text-sm text-muted" style="margin-bottom:20px;">${workout.description||''}</p>
+    <div class="section-header">
+      <span class="section-title">Exercícios (${exList.length})</span>
+      <button class="btn btn-primary btn-sm" onclick="openAddExerciseModal('${workoutId}')">+ Add</button>
+    </div>
+    <div id="exercise-list-detail">
+      ${exList.length?exList.map(e=>`
+        <div class="exercise-item" style="cursor:default;">
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:500;">${e.name}</div>
+            <div class="text-xs text-muted">${e.sets||'-'} séries • ${e.reps||'-'} reps${e.load?' • '+e.load:''}</div>
+            ${e.notes?`<div class="text-xs" style="color:var(--text3);margin-top:2px;">${e.notes}</div>`:''}
+          </div>
+          <button onclick="deleteExercise('${e.id}','${workoutId}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:20px;padding:4px;line-height:1;">×</button>
+        </div>
+      `).join(''):'<p class="text-sm text-muted">Nenhum exercício ainda. Adicione o primeiro!</p>'}
+    </div>
+  `;
   openModal('modal-workout-detail');
 }
+function openAddExerciseModal(workoutId){
+  document.getElementById('exercise-workout-id').value=workoutId;
+  closeModal('modal-workout-detail');
+  openModal('modal-add-exercise');
+}
+async function addExercise(){
+  const workoutId=document.getElementById('exercise-workout-id').value;
+  const name=document.getElementById('exercise-name-input').value.trim();
+  const sets=document.getElementById('exercise-sets-input').value;
+  const reps=document.getElementById('exercise-reps-input').value.trim();
+  const load=document.getElementById('exercise-load-input').value.trim();
+  const notes=document.getElementById('exercise-obs-input').value.trim();
+  if(!name)return showToast('Digite o nome do exercício','error');
+  const{error}=await sb.from('exercises').insert({workout_id:workoutId,name,sets:parseInt(sets)||null,reps,load,notes});
+  if(error)return showToast('Erro ao adicionar exercício','error');
+  showToast('Exercício adicionado!','success');
+  closeModal('modal-add-exercise');
+  ['exercise-name-input','exercise-sets-input','exercise-reps-input','exercise-load-input','exercise-obs-input'].forEach(id=>document.getElementById(id).value='');
+  await loadWorkouts();
+  openWorkoutDetail(workoutId);
+}
+async function deleteExercise(id,workoutId){
+  const{error}=await sb.from('exercises').delete().eq('id',id);
+  if(error)return showToast('Erro ao remover','error');
+  showToast('Removido','info');
+  await loadWorkouts();openWorkoutDetail(workoutId);
+}
 
-async function loadDetailExercises() {
-  const { data } = await sb.from('exercises').select('*').eq('workout_id', currentWorkoutId).order('created_at');
-  const container = document.getElementById('detail-exercises-list');
-  if (!data?.length) { container.innerHTML = '<p style="color:var(--text3);font-size:13px;margin-bottom:12px;">Nenhum exercício ainda.</p>'; return; }
-  container.innerHTML = data.map(e => `
-    <div class="exercise-item">
-      <div style="flex:1;">
-        <p style="font-size:13px;font-weight:500;">${escHtml(e.name)}</p>
-        <p style="font-size:11px;color:var(--text3);">${e.sets} séries × ${e.reps} reps${e.load ? ' × ' + escHtml(e.load) : ''}</p>
-      </div>
+async function openAssignModal(clientId){
+  document.getElementById('assign-workout-list').dataset.clientId=clientId;
+  const{data:workouts}=await sb.from('workouts').select('*').eq('trainer_id',currentUser.id);
+  const list=document.getElementById('assign-workout-list');
+  if(!workouts?.length){list.innerHTML='<p class="text-sm text-muted">Crie treinos primeiro.</p>';openModal('modal-assign-workout');return;}
+  list.innerHTML=workouts.map(w=>`
+    <div class="exercise-item" onclick="assignWorkout('${clientId}','${w.id}')">
+      <div style="flex:1;"><div style="font-size:14px;font-weight:500;">${w.name}</div><div class="text-xs text-muted">${w.description||''}</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#555"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
     </div>
   `).join('');
+  openModal('modal-assign-workout');
+}
+async function assignWorkout(clientId,workoutId){
+  const{error}=await sb.from('profiles').update({assigned_workout_id:workoutId}).eq('id',clientId);
+  if(error)return showToast('Erro ao atribuir treino','error');
+  showToast('Treino atribuído!','success');closeModal('modal-assign-workout');
 }
 
-async function addExercise() {
-  const name = document.getElementById('exercise-name-input').value.trim();
-  const sets = document.getElementById('exercise-sets').value;
-  const reps = document.getElementById('exercise-reps').value;
-  const load = document.getElementById('exercise-load').value.trim();
-  if (!name || !sets || !reps) return showToast('Preencha nome, séries e reps', 'error');
-
-  const { error } = await sb.from('exercises').insert({ workout_id: currentWorkoutId, name, sets: parseInt(sets), reps: parseInt(reps), load });
-  if (error) return showToast('Erro: ' + error.message, 'error');
-
-  showToast('Exercício adicionado!', 'success');
-  document.getElementById('exercise-name-input').value = '';
-  document.getElementById('exercise-sets').value = '';
-  document.getElementById('exercise-reps').value = '';
-  document.getElementById('exercise-load').value = '';
-  await loadDetailExercises();
-}
-
-function trainerNav(tab) {
-  ['home','workouts','clients','profile'].forEach(t => {
-    const screen = document.getElementById(`screen-trainer-${t}`);
-    const btn = document.getElementById(`tnav-${t}`);
-    if (t === tab) { screen.classList.add('active'); btn.classList.add('active'); }
-    else { screen.classList.remove('active'); btn.classList.remove('active'); }
-  });
-}
-
-// ===== CLIENT APP =====
-async function showClientApp() {
-  hideAll();
-  show('screen-client-home');
-  show('client-nav');
-  hide('screen-loading');
-
-  const name = currentProfile.full_name;
-  const initials = name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
-  document.getElementById('client-name').textContent = name;
-  document.getElementById('client-avatar').textContent = initials;
-  document.getElementById('client-profile-name').textContent = name;
-  document.getElementById('client-profile-email').textContent = currentUser.email;
-  document.getElementById('client-profile-avatar').textContent = initials;
-
-  await loadClientData();
-}
-
-async function loadClientData() {
-  const { data: workouts } = await sb.from('workouts')
-    .select('*, exercises(*)')
-    .or(`client_id.eq.${currentUser.id},trainer_id.eq.${currentProfile.trainer_id}`);
-
-  const myWorkouts = workouts?.filter(w => w.client_id === currentUser.id || !w.client_id) || [];
-
-  const todayContainer = document.getElementById('client-workout-today');
-  const allContainer = document.getElementById('client-workouts-list');
-
-  if (!myWorkouts.length) {
-    todayContainer.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum treino atribuído ainda</p>';
-    allContainer.innerHTML = '';
-    return;
+async function loadClientWorkout(){
+  document.getElementById('client-welcome-name').textContent=currentProfile.full_name?.split(' ')[0]||'Aluno';
+  const content=document.getElementById('client-workout-content');
+  // Reload profile to get latest assigned_workout_id
+  const{data:prof}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  if(prof)currentProfile=prof;
+  if(!currentProfile.assigned_workout_id){
+    content.innerHTML='<div class="empty-state">Nenhum treino atribuído ainda.<br>Aguarde seu personal trainer!</div>';return;
   }
-
-  const first = myWorkouts[0];
-  todayContainer.innerHTML = `
-    <div class="card" onclick="openClientWorkout('${first.id}','${escHtml(first.name)}','${escHtml(first.description||'')}')" style="cursor:pointer;">
-      <div class="flex justify-between items-center" style="margin-bottom:10px;">
-        <h3 style="font-size:15px;">${escHtml(first.name)}</h3>
-        <span class="badge badge-purple">Fazer agora</span>
-      </div>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">${escHtml(first.description||'Clique para começar')}</p>
-      <div style="font-size:12px;color:var(--text3);">${first.exercises?.length || 0} exercícios</div>
-    </div>`;
-
-  allContainer.innerHTML = myWorkouts.map(w => `
-    <div class="list-item" onclick="openClientWorkout('${w.id}','${escHtml(w.name)}','${escHtml(w.description||'')}')">
-      <div style="width:38px;height:38px;background:var(--purple-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;">🏋️</div>
-      <div style="flex:1;">
-        <p style="font-size:14px;font-weight:500;">${escHtml(w.name)}</p>
-        <p style="font-size:11px;color:var(--text3);">${w.exercises?.length || 0} exercícios</p>
-      </div>
-      <span style="color:var(--text3);font-size:18px;">›</span>
-    </div>`).join('');
-
-  await loadClientProgress();
-}
-
-async function openClientWorkout(workoutId, name, desc) {
-  currentWorkoutId = workoutId;
-  completedExercises = new Set();
-  document.getElementById('workout-screen-title').textContent = name;
-  document.getElementById('workout-screen-desc').textContent = desc || '';
-
-  const { data: exercises } = await sb.from('exercises').select('*').eq('workout_id', workoutId).order('created_at');
-
-  const container = document.getElementById('exercises-list');
-  if (!exercises?.length) {
-    container.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum exercício nesse treino</p>';
-  } else {
-    container.innerHTML = exercises.map(e => `
-      <div class="exercise-item" id="ex-item-${e.id}">
-        <div class="check-box" id="check-${e.id}" onclick="toggleExercise('${e.id}', ${exercises.length})"></div>
-        <div style="flex:1;">
-          <p style="font-size:14px;font-weight:500;">${escHtml(e.name)}</p>
-          <p style="font-size:12px;color:var(--text3);">${e.sets} séries × ${e.reps} reps${e.load ? ' · ' + escHtml(e.load) : ''}</p>
+  const{data:workout}=await sb.from('workouts').select('*').eq('id',currentProfile.assigned_workout_id).single();
+  const{data:exercises}=await sb.from('exercises').select('*').eq('workout_id',currentProfile.assigned_workout_id).order('created_at');
+  const today=new Date().toISOString().split('T')[0];
+  const{data:logs}=await sb.from('workout_logs').select('*').eq('client_id',currentUser.id).eq('workout_date',today);
+  const doneIds=new Set((logs||[]).map(l=>l.exercise_id));
+  const exList=exercises||[];
+  const done=exList.filter(e=>doneIds.has(e.id)).length;
+  const pct=exList.length?Math.round((done/exList.length)*100):0;
+  content.innerHTML=`
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><span class="card-title">${workout?.name||'Treino'}</span><span class="badge badge-green">${done}/${exList.length}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="background:var(--purple);width:${pct}%"></div></div>
+      <p class="text-xs text-muted" style="margin-top:6px;">${pct}% concluído hoje</p>
+    </div>
+    ${exList.map(e=>`
+      <div class="exercise-item ${doneIds.has(e.id)?'done':''}" onclick="toggleExercise('${e.id}','${doneIds.has(e.id)}')">
+        <div class="check-box ${doneIds.has(e.id)?'checked':''}">
+          ${doneIds.has(e.id)?'<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>':''}
         </div>
-      </div>`).join('');
-  }
-
-  updateProgress(0, exercises?.length || 0);
-  document.getElementById('finish-btn-wrap').classList.add('hidden');
-
-  clientNav('workout');
-}
-
-function toggleExercise(id, total) {
-  const box = document.getElementById(`check-${id}`);
-  const item = document.getElementById(`ex-item-${id}`);
-  if (completedExercises.has(id)) {
-    completedExercises.delete(id);
-    box.classList.remove('checked');
-    item.classList.remove('done');
-  } else {
-    completedExercises.add(id);
-    box.classList.add('checked');
-    item.classList.add('done');
-  }
-  updateProgress(completedExercises.size, total);
-  document.getElementById('finish-btn-wrap').classList.toggle('hidden', completedExercises.size < total);
-}
-
-function updateProgress(done, total) {
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  document.getElementById('workout-progress-bar').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = `${done}/${total}`;
-}
-
-async function finishWorkout() {
-  await sb.from('workout_sessions').insert({
-    client_id: currentUser.id,
-    workout_id: currentWorkoutId,
-    exercises_done: completedExercises.size,
-    completed_at: new Date().toISOString()
-  });
-  showToast('🏆 Treino concluído!', 'success');
-  clientNav('home');
-  await loadClientData();
-}
-
-async function loadClientProgress() {
-  const { data: sessions } = await sb.from('workout_sessions').select('*').eq('client_id', currentUser.id).order('completed_at', { ascending: false });
-  document.getElementById('stat-done').textContent = sessions?.length || 0;
-  document.getElementById('stat-exercises').textContent = sessions?.reduce((a, s) => a + (s.exercises_done || 0), 0) || 0;
-
-  const historyContainer = document.getElementById('progress-history');
-  if (!sessions?.length) { historyContainer.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nenhum treino finalizado ainda</p>'; return; }
-  historyContainer.innerHTML = sessions.slice(0, 10).map(s => {
-    const date = new Date(s.completed_at).toLocaleDateString('pt-BR');
-    return `<div class="list-item">
-      <div style="width:34px;height:34px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;">✓</div>
-      <div style="flex:1;">
-        <p style="font-size:13px;font-weight:500;">${date}</p>
-        <p style="font-size:11px;color:var(--text3);">${s.exercises_done} exercícios concluídos</p>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:500;${doneIds.has(e.id)?'text-decoration:line-through;color:var(--text3);':''}">${e.name}</div>
+          <div class="text-xs text-muted">${e.sets||'-'} séries • ${e.reps||'-'} reps${e.load?' • '+e.load:''}</div>
+          ${e.notes?`<div class="text-xs" style="color:var(--text3)">${e.notes}</div>`:''}
+        </div>
       </div>
-      <span class="badge badge-green">Feito</span>
-    </div>`;
-  }).join('');
+    `).join('')}
+    ${pct===100?'<div style="text-align:center;padding:24px;"><div style="font-size:36px;margin-bottom:8px;">🎉</div><p style="font-size:16px;font-weight:700;color:var(--green);font-family:Syne,sans-serif;">Treino completo!</p><p class="text-sm text-muted">Ótimo trabalho hoje!</p></div>':''}
+  `;
+}
+async function toggleExercise(exerciseId,isDone){
+  const today=new Date().toISOString().split('T')[0];
+  if(isDone==='true'){await sb.from('workout_logs').delete().eq('client_id',currentUser.id).eq('exercise_id',exerciseId).eq('workout_date',today);}
+  else{await sb.from('workout_logs').insert({client_id:currentUser.id,exercise_id:exerciseId,workout_date:today});}
+  loadClientWorkout();
 }
 
-function clientNav(tab) {
-  const tabs = ['home','progress','profile'];
-  tabs.forEach(t => {
-    const btn = document.getElementById(`cnav-${t}`);
-    if (btn) btn.classList.toggle('active', t === tab);
-  });
-  document.getElementById('screen-client-home').classList.toggle('active', tab === 'home');
-  document.getElementById('screen-client-workout').classList.toggle('active', tab === 'workout');
-  document.getElementById('screen-client-progress').classList.toggle('active', tab === 'progress');
-  document.getElementById('screen-client-profile').classList.toggle('active', tab === 'profile');
+async function loadProgress(){
+  const{data:logs}=await sb.from('workout_logs').select('*').eq('client_id',currentUser.id).order('workout_date',{ascending:false});
+  const content=document.getElementById('progress-content');
+  if(!logs?.length){content.innerHTML='<div class="empty-state">Nenhum treino registrado ainda.<br>Complete seus treinos para ver o progresso!</div>';return;}
+  const byDate={};logs.forEach(l=>{if(!byDate[l.workout_date])byDate[l.workout_date]=0;byDate[l.workout_date]++;});
+  content.innerHTML=`
+    <div class="stats-grid" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-value text-purple">${Object.keys(byDate).length}</div><div class="stat-label">Dias treinados</div></div>
+      <div class="stat-card"><div class="stat-value text-green">${logs.length}</div><div class="stat-label">Exercícios feitos</div></div>
+    </div>
+    <div class="section-title" style="margin-bottom:12px;">Histórico</div>
+    ${Object.entries(byDate).slice(0,10).map(([date,count])=>`
+      <div class="card" style="padding:12px 16px;">
+        <div class="flex justify-between items-center">
+          <div><div style="font-size:14px;font-weight:500;">${formatDate(date)}</div><div class="text-xs text-muted">${count} exercício${count>1?'s':''} concluído${count>1?'s':''}</div></div>
+          <span class="badge badge-green">✓</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
 }
+function formatDate(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});}
 
-function goBack() { clientNav('home'); }
-
-// ===== UTILS =====
-function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
-function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
-function hideAll() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  hide('screen-loading'); hide('screen-auth');
+function renderProfile(){
+  const name=currentProfile.full_name||'Usuário';
+  const av=document.getElementById('profile-avatar-big');
+  av.textContent=getInitials(name);av.style.background=getColor(name);av.style.color='#fff';
+  document.getElementById('profile-name').textContent=name;
+  document.getElementById('profile-role-label').textContent=currentProfile.role==='trainer'?'Personal Trainer':'Aluno';
+  document.getElementById('profile-info').innerHTML=`
+    <div class="profile-row"><span class="label">E-mail</span><span style="font-size:13px;">${currentUser.email}</span></div>
+    <div class="profile-row"><span class="label">Tipo de conta</span><span>${currentProfile.role==='trainer'?'Personal Trainer':'Aluno'}</span></div>
+    <div class="profile-row"><span class="label">App</span><span class="text-muted">FitPro v1.0</span></div>
+  `;
 }
-function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
-function escHtml(str) { return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (type ? ' ' + type : '');
-  setTimeout(() => t.classList.add('hidden'), 3000);
-}
-
-function copyCode() {
-  const code = currentProfile?.invite_code;
-  if (!code) return;
-  navigator.clipboard.writeText(code).then(() => showToast('Código copiado!', 'success'));
-}
-
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
-});
 
 init();
 </script>
